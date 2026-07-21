@@ -1,0 +1,41 @@
+#cloud-config
+packages:
+  - zsh
+  - neovim
+  - git
+  - gcc
+  - make
+  - python3
+  - unzip
+  - golang
+  - pandoc
+  - openssl-devel
+  - pkgconf-pkg-config
+  - bzip2
+users:
+  - name: web3
+    groups: wheel
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMHdxxIUQf/tdBp1O+pS1TsRctuAjvK358MP6IN0eygy exiquio@gmail.com
+write_files:
+  - path: /etc/dnf/dnf.conf
+    content: |
+      [main]
+      gpgcheck=1
+      installonly_limit=3
+      clean_requirements_on_remove=True
+      best=False
+      skip_if_unavailable=False
+      fastestmirror=True
+      max_parallel_downloads=10
+      minrate=1k
+      timeout=30
+      retries=10
+growpart:
+  mode: auto
+  devices: ['/']
+runcmd:
+  - restorecon -R /home/web3/
+  - systemctl restart sshd

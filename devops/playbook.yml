@@ -1,0 +1,101 @@
+---
+- name: Provision Web3 Audit Environment
+  hosts: web3
+  become: yes
+  tasks:
+    - name: Wait for cloud-init to finish
+      shell: |
+        cloud-init status --wait 2>&1 || true
+
+    - name: Set web3 shell to zsh
+      user:
+        name: web3
+        shell: /bin/zsh
+
+    - name: Install Oh My Zsh
+      become_user: web3
+      shell: |
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+      args:
+        creates: ~/.oh-my-zsh
+
+    - name: Install Rust and Cargo
+      become_user: web3
+      shell: |
+        curl https://sh.rustup.rs -sSf | sh -s -- -y
+      args:
+        creates: ~/.cargo/bin/rustc
+
+    - name: Install mise
+      become_user: web3
+      shell: |
+        curl https://mise.run | sh
+      args:
+        creates: ~/.local/bin/mise
+
+    - name: Install typst-cli
+      become_user: web3
+      shell: |
+        PATH="$HOME/.cargo/bin:$PATH" cargo install --locked typst-cli
+      args:
+        creates: ~/.cargo/bin/typst
+
+    - name: Install pnpm via mise
+      become_user: web3
+      shell: |
+        ~/.local/bin/mise use -g pnpm@latest
+      args:
+        creates: ~/.local/bin/pnpm
+
+    - name: Install Node.js via mise
+      become_user: web3
+      shell: |
+        ~/.local/bin/mise use -g node@latest
+      args:
+        creates: ~/.local/bin/node
+
+    - name: Install uv
+      become_user: web3
+      shell: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+      args:
+        creates: ~/.local/bin/uv
+
+    - name: Install scc
+      become_user: web3
+      shell: |
+        go install github.com/boyter/scc/v3@latest
+      args:
+        creates: ~/go/bin/scc
+
+    - name: Install Goose AI
+      become_user: web3
+      shell: |
+        curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash
+      args:
+        creates: ~/.local/bin/goose
+
+    - name: Install Foundry as web3
+      become_user: web3
+      shell: |
+        curl -L https://getfoundry.sh/install | bash
+        ~/.foundry/bin/foundryup
+      args:
+        creates: ~/.foundry/bin/forge
+
+    - name: Install solc-select via uv
+      become_user: web3
+      shell: |
+        ~/.local/bin/uv tool install solc-select
+      args:
+        creates: ~/.local/bin/solc-select
+
+    - name: Inject LiteLLM Proxy Environment Variables
+      become_user: web3
+      blockinfile:
+        path: ~/.zshrc
+        block: |
+          export OPENAI_API_KEY="sk-dummy-key-does-not-matter"
+          export OPENAI_API_BASE="http://192.168.122.1:4000/v1"
+          export PATH="$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+          eval "$(mise activate zsh)"
