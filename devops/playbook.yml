@@ -23,6 +23,7 @@
           - golang
           - pandoc
           - ncurses-devel
+          - libicu-devel
           - openssl-devel
           - pkgconf-pkg-config
           - bzip2
