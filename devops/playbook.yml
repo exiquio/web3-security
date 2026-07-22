@@ -160,6 +160,13 @@
         path: ~/.config/goose
         state: directory
 
+    - name: Create audit working directory
+      become_user: web3
+      file:
+        path: ~/audit
+        state: directory
+        mode: "0755"
+
     - name: Create Goose provider config
       become_user: web3
       copy:
