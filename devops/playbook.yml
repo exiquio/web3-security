@@ -86,6 +86,20 @@
       args:
         creates: ~/.local/bin/node
 
+    - name: Install Erlang via mise
+      become_user: web3
+      shell: |
+        ~/.local/bin/mise use -g erlang@latest
+      args:
+        creates: ~/.local/share/mise/shims/erl
+
+    - name: Install Elixir via mise
+      become_user: web3
+      shell: |
+        ~/.local/bin/mise use -g elixir@latest
+      args:
+        creates: ~/.local/share/mise/shims/elixir
+
     - name: Install uv
       become_user: web3
       shell: |
