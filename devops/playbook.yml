@@ -7,6 +7,23 @@
       shell: |
         cloud-init status --wait 2>&1 || true
 
+    - name: Ensure base packages (safety net if cloud-init timed out)
+      dnf:
+        name:
+          - zsh
+          - neovim
+          - git
+          - gcc
+          - make
+          - python3
+          - unzip
+          - golang
+          - pandoc
+          - openssl-devel
+          - pkgconf-pkg-config
+          - bzip2
+        state: present
+
     - name: Set web3 shell to zsh
       user:
         name: web3
@@ -39,6 +56,13 @@
         PATH="$HOME/.cargo/bin:$PATH" cargo install --locked typst-cli
       args:
         creates: ~/.cargo/bin/typst
+
+    - name: Install sd
+      become_user: web3
+      shell: |
+        PATH="$HOME/.cargo/bin:$PATH" cargo install sd
+      args:
+        creates: ~/.cargo/bin/sd
 
     - name: Install pnpm via mise
       become_user: web3
@@ -90,12 +114,47 @@
       args:
         creates: ~/.local/bin/solc-select
 
-    - name: Inject LiteLLM Proxy Environment Variables
+    - name: Create LiteLLM env vars in .zshenv (for non-interactive shells)
+      become_user: web3
+      blockinfile:
+        path: ~/.zshenv
+        create: yes
+        block: |
+          export LITELLM_HOST="http://192.168.122.1:4000"
+          export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
+          export GOOSE_MODE=smart_approve
+          export GOOSE_CONTEXT_LIMIT=128000
+          export PATH="$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+          eval "$(mise activate zsh)"
+
+    - name: Append same block to .zshrc for interactive shells
       become_user: web3
       blockinfile:
         path: ~/.zshrc
         block: |
-          export OPENAI_API_KEY="sk-dummy-key-does-not-matter"
-          export OPENAI_API_BASE="http://192.168.122.1:4000/v1"
+          export LITELLM_HOST="http://192.168.122.1:4000"
+          export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
+          export GOOSE_MODE=smart_approve
+          export GOOSE_CONTEXT_LIMIT=128000
           export PATH="$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
           eval "$(mise activate zsh)"
+
+    - name: Create Goose config directory
+      become_user: web3
+      file:
+        path: ~/.config/goose
+        state: directory
+
+    - name: Create Goose provider config
+      become_user: web3
+      copy:
+        dest: ~/.config/goose/config.yaml
+        content: |
+          GOOSE_MODE: smart_approve
+          GOOSE_TELEMETRY_ENABLED: false
+          active_provider: litellm
+          providers:
+            litellm:
+              enabled: true
+              model: deepseek/deepseek-v4-flash
+              configured: true
