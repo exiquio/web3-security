@@ -10,7 +10,7 @@ prepare:
 	@echo "Downloading Fedora Cloud Base image..."
 	@mkdir -p $(IMAGE_DIR)
 	@if [ ! -f $(IMAGE_DEST) ]; then curl -Lf $(IMAGE_URL) -o $(IMAGE_DEST); fi
-up: prepare llm-proxy-start
+up: prepare
 	@echo "Destroying existing VM if present..."
 	@virsh destroy $(VM_NAME) 2>/dev/null || true
 	@virsh undefine $(VM_NAME) --remove-all-storage 2>/dev/null || true
@@ -33,8 +33,15 @@ up: prepare llm-proxy-start
 sync:
 	@echo "Syncing Neovim configuration..."
 	ssh web3 mkdir -p /home/web3/.config/nvim /home/web3/.local/share/nvim/site/pack/plugins/start
-	rsync -avz --delete --exclude=.git ~/.config/nvim/ web3@web3:~/.config/nvim/
-	rsync -avz --delete ~/.local/share/nvim/site/pack/plugins/start/ web3@web3:~/.local/share/nvim/site/pack/plugins/start/
+	rsync -avz --delete --exclude=.git ~/Code/Personal/nvim-configs/ web3@web3:~/.config/nvim/
+	@echo "  Syncing dracula_pro theme..."
+	rsync -avz --delete --exclude=.git ~/.local/share/nvim/site/pack/plugins/start/dracula_pro/ web3@web3:~/.local/share/nvim/site/pack/plugins/start/dracula_pro/
+	@echo "  Patching codecompanion for guest proxy..."
+	@ssh web3 'sed -i \
+		-e "s|DEEPSEEK_API_KEY|sk-dummy-key-does-not-matter|" \
+		-e "/extend(\"deepseek\", {/a\\            url = \"http://192.168.122.1:4000/v1/chat/completions\"," \
+		~/.config/nvim/lua/custom/plugins/codecompanion.lua'
+	@echo "  Done."
 LITELLM_SERVICE = $(HOME)/.config/systemd/user/litellm-proxy.service
 
 $(LITELLM_SERVICE):
@@ -47,7 +54,7 @@ $(LITELLM_SERVICE):
 		'' \
 		'[Service]' \
 		'Type=simple' \
-		'ExecStart=%h/.local/bin/litellm --model deepseek/deepseek-v4-flash --host 0.0.0.0 --port 4000' \
+		'ExecStart=%h/.local/bin/litellm --config $(HOME)/Code/Personal/web3-security/devops/litellm-config.yaml --host 0.0.0.0 --port 4000' \
 		'Restart=on-failure' \
 		'RestartSec=5' \
 		'' \

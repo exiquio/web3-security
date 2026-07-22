@@ -156,5 +156,5 @@
           providers:
             litellm:
               enabled: true
-              model: deepseek/deepseek-v4-flash
+              model: deepseek/deepseek-v4-pro
               configured: true
