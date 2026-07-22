@@ -1,3 +1,3 @@
 # web3-security-scripts
 
-- Copy VM Guest Script to guest vm
+> Various script to aid in web3 security audits ("no, their "security reviews"" :|")
