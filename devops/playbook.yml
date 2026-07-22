@@ -114,6 +114,13 @@
       args:
         creates: ~/.local/bin/solc-select
 
+    - name: Install slither-analyzer via uv
+      become_user: web3
+      shell: |
+        ~/.local/bin/uv tool install slither-analyzer
+      args:
+        creates: ~/.local/bin/slither
+
     - name: Create LiteLLM env vars in .zshenv (for non-interactive shells)
       become_user: web3
       blockinfile:
