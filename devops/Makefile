@@ -43,7 +43,7 @@ sync:
 		~/.config/nvim/lua/custom/plugins/codecompanion.lua'
 	@echo "  Syncing scripts..."
 	@ssh web3 mkdir -p /home/web3/scripts
-	rsync -avz --delete --chmod=u=rwx,go=rx ~/Code/Personal/web3-security/scripts/ web3@web3:~/scripts/
+	rsync -avz --delete --exclude=.expert --chmod=u=rwx,go=rx ~/Code/Personal/web3-security/scripts/ web3@web3:~/scripts/
 	@echo "  Done."
 LITELLM_SERVICE = $(HOME)/.config/systemd/user/litellm-proxy.service
 
