@@ -14,14 +14,19 @@
           - neovim
           - git
           - gcc
+          - gcc-c++
           - make
+          - autoconf
+          - automake
           - python3
           - unzip
           - golang
           - pandoc
+          - ncurses-devel
           - openssl-devel
           - pkgconf-pkg-config
           - bzip2
+          - perl
         state: present
 
     - name: Install GitHub CLI via official repo
