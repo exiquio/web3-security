@@ -24,6 +24,14 @@
           - bzip2
         state: present
 
+    - name: Install GitHub CLI via official repo
+      shell: |
+        dnf install -y 'dnf-command(config-manager)'
+        dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+        dnf install -y gh
+      args:
+        creates: /usr/bin/gh
+
     - name: Set web3 shell to zsh
       user:
         name: web3
