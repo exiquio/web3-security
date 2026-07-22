@@ -233,7 +233,7 @@ defmodule SlitherReport do
     """
     # Slither Static Analysis Report
 
-    _Generated on #{Date.utc_today()}_
+    Generated on #{Date.utc_today()}
 
     ## Summary
 
@@ -249,6 +249,7 @@ defmodule SlitherReport do
 
     [
       report_header(),
+      "<!-- markdownlint-disable MD013 MD033 MD034 -->",
       toc_section(grouped, severity_order),
       summary_section(grouped, severity_order),
       findings_sections(grouped, severity_order)
@@ -264,7 +265,7 @@ defmodule SlitherReport do
     """
     # Slither Static Analysis Report
 
-    _Generated on #{Date.utc_today()}_
+    Generated on #{Date.utc_today()}
     """
   end
 
@@ -321,7 +322,7 @@ defmodule SlitherReport do
     - **Total findings:** #{total}
 
     | Severity      | Count |
-    |---------------|-------|
+    | --------------- | ------- |
     #{Enum.join(rows, "\n")}
 
     ---
@@ -381,7 +382,7 @@ defmodule SlitherReport do
       "### <a id=\"#{anchor}\"></a>- [ ] #{idx}. #{check}",
       "",
       "| Property   | Value         |",
-      "|------------|---------------|",
+      "| ------------ | --------------- |",
       "| Impact     | #{impact}      |",
       "| Confidence | #{confidence}  |",
       "",
