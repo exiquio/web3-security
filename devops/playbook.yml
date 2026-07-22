@@ -139,7 +139,7 @@
           export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
           export GOOSE_MODE=smart_approve
           export GOOSE_CONTEXT_LIMIT=128000
-          export PATH="$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+          export PATH="$HOME/scripts:$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
           eval "$(mise activate zsh)"
 
     - name: Append same block to .zshrc for interactive shells
@@ -151,7 +151,7 @@
           export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
           export GOOSE_MODE=smart_approve
           export GOOSE_CONTEXT_LIMIT=128000
-          export PATH="$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
+          export PATH="$HOME/scripts:$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
           eval "$(mise activate zsh)"
 
     - name: Create Goose config directory
