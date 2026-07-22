@@ -255,6 +255,9 @@ defmodule SlitherReport do
       findings_sections(grouped, severity_order)
     ]
     |> Enum.join("\n")
+    |> String.split("\n")
+    |> Enum.map(&String.trim_trailing/1)
+    |> Enum.join("\n")
   end
 
   # -------------------------------------------------------------------
@@ -285,7 +288,7 @@ defmodule SlitherReport do
         |> Enum.map(fn {det, idx} ->
           check = safely(det, "check", "unknown")
           anchor = "#{severity_slug(severity)}-#{idx}-#{check}"
-          "  - [ ] [#{check}](##{anchor})"
+          "- [ ] [#{check}](##{anchor})"
         end)
       end)
 
@@ -309,11 +312,11 @@ defmodule SlitherReport do
   defp summary_section(grouped, severity_order) do
     total = grouped |> Map.values() |> List.flatten() |> length()
 
-    rows =
+    table_rows =
       severity_order
       |> Enum.map(fn severity ->
-        count = Enum.count(grouped[severity] || [])
-        "| **#{severity}** | #{count} |"
+        count = Integer.to_string(Enum.count(grouped[severity] || []))
+        {"**#{severity}**", count}
       end)
 
     """
@@ -321,9 +324,7 @@ defmodule SlitherReport do
 
     - **Total findings:** #{total}
 
-    | Severity      | Count |
-    | --------------- | ------- |
-    #{Enum.join(rows, "\n")}
+    #{format_table("Severity", "Count", table_rows)}
 
     ---
     """
@@ -378,20 +379,25 @@ defmodule SlitherReport do
     # Build a stable anchor for TOC linking
     anchor = "#{severity_slug(severity)}-#{idx}-#{check}"
 
+    prop_table =
+      format_table("Property", "Value", [
+        {"Impact", impact},
+        {"Confidence", confidence}
+      ])
+
+    details = render_slither_details(slither_md)
+    details_block = if details != "", do: ["", details], else: []
+
     [
       "### <a id=\"#{anchor}\"></a>- [ ] #{idx}. #{check}",
       "",
-      "| Property   | Value         |",
-      "| ------------ | --------------- |",
-      "| Impact     | #{impact}      |",
-      "| Confidence | #{confidence}  |",
+      prop_table,
       "",
       "**Description:** #{description}",
       "",
-      render_affected_code(elements, check),
-      "",
-      render_slither_details(slither_md)
-    ]
+      render_affected_code(elements, check)
+    ] ++
+      details_block
     |> Enum.join("\n")
   end
 
@@ -416,19 +422,21 @@ defmodule SlitherReport do
   # DESCRIPTION CLEANUP
   # -------------------------------------------------------------------
 
-  # Collapses multiple spaces/tabs, trims, and normalises newlines
-  # so the description reads cleanly in the report.
+  # Collapses all whitespace (including newlines) into single spaces,
+  # trims, and produces a single-line description safe for inline use.
   defp clean_description(nil), do: "No description provided."
 
   defp clean_description(str) when is_binary(str) do
-    trimmed =
+    oneline =
       str
-      |> String.replace("\r\n", "\n")
-      |> String.replace("\t", "  ")
+      |> String.replace("\r\n", " ")
+      |> String.replace("\n", " ")
+      |> String.replace("\t", " ")
       |> String.replace(~r/ +/, " ")
       |> String.trim()
+      |> String.replace("_", "\\_")
 
-    if trimmed == "", do: "No description provided.", else: trimmed
+    if oneline == "", do: "No description provided.", else: oneline
   end
 
   defp clean_description(_), do: "No description provided."
@@ -511,8 +519,9 @@ defmodule SlitherReport do
         ""
       end
 
-    ["**Affected code:**", Enum.join(items, "\n"), truncation, dep_note]
+    ["**Affected code:**", :blank, Enum.join(items, "\n"), truncation, dep_note]
     |> Enum.reject(&(&1 == ""))
+    |> Enum.map(fn :blank -> ""; other -> other end)
     |> Enum.join("\n")
   end
 
@@ -536,11 +545,20 @@ defmodule SlitherReport do
   defp render_slither_details(""), do: ""
 
   defp render_slither_details(markdown) when is_binary(markdown) do
+    cleaned =
+      markdown
+      |> String.replace("\t", "  ")
+      |> String.trim_trailing()
+
     """
     <details>
     <summary><b>🔍 Full Slither Output</b></summary>
 
-    #{markdown}
+    <!-- markdownlint-disable MD007 MD032 MD037 -->
+
+    #{cleaned}
+
+    <!-- markdownlint-enable MD007 MD032 MD037 -->
 
     </details>
     """
@@ -623,6 +641,35 @@ defmodule SlitherReport do
   defp safely(nil, _key, default), do: default
   defp safely(map, key, default) when is_map(map), do: Map.get(map, key, default)
   defp safely(_, _key, default), do: default
+
+  # Builds a properly aligned two-column Markdown table.
+  # Each row is a {col1, col2} tuple. Column widths are computed from
+  # headers and content so the separator and content pipes all align.
+  defp format_table(header1, header2, rows) do
+    col1_width =
+      [String.length(header1) | Enum.map(rows, fn {c1, _} -> String.length(c1) end)]
+      |> Enum.max()
+      |> max(3)
+
+    col2_width =
+      [String.length(header2) | Enum.map(rows, fn {_, c2} -> String.length(c2) end)]
+      |> Enum.max()
+      |> max(3)
+
+    pad = fn str, width ->
+      str <> String.duplicate(" ", width - String.length(str))
+    end
+
+    [
+      "| #{pad.(header1, col1_width)} | #{pad.(header2, col2_width)} |",
+      "| #{String.duplicate("-", col1_width)} | #{String.duplicate("-", col2_width)} |",
+      Enum.map(rows, fn {c1, c2} ->
+        "| #{pad.(c1, col1_width)} | #{pad.(c2, col2_width)} |"
+      end)
+    ]
+    |> List.flatten()
+    |> Enum.join("\n")
+  end
 
   # Converts a severity string to a URL-safe slug.
   defp severity_slug(str) when is_binary(str) do
