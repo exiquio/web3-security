@@ -1,3 +1,4 @@
+#!/usr/bin/env elixir
 # Ensure the Jason JSON library is available.
 # Requires Elixir 1.12 or later for Mix.install/1.
 Mix.install([:jason])
@@ -89,7 +90,9 @@ defmodule SlitherReport do
     end
 
     case Jason.decode(File.read!(path)) do
-      {:ok, data} -> data
+      {:ok, data} ->
+        data
+
       {:error, reason} ->
         IO.puts(:stderr, "Error: invalid JSON - #{inspect(reason)}")
         System.halt(1)
@@ -108,6 +111,7 @@ defmodule SlitherReport do
     end
 
     error = json["error"]
+
     if is_binary(error) and error != "" do
       IO.warn("Slither reported an error: #{error}")
     end
@@ -139,20 +143,29 @@ defmodule SlitherReport do
 
       # Direct "detectors" key
       is_map(json) and Map.has_key?(json, "detectors") ->
-        IO.warn("JSON structure: detectors found under top-level 'detectors' key, " <>
-                "not 'results.detectors' - non-standard Slither output")
+        IO.warn(
+          "JSON structure: detectors found under top-level 'detectors' key, " <>
+            "not 'results.detectors' - non-standard Slither output"
+        )
+
         json["detectors"]
 
       # Bare list
       is_list(json) ->
-        IO.warn("JSON structure: received a bare list instead of an object - " <>
-                "non-standard Slither output")
+        IO.warn(
+          "JSON structure: received a bare list instead of an object - " <>
+            "non-standard Slither output"
+        )
+
         json
 
       # Single finding object (edge case)
       is_map(json) and (Map.has_key?(json, "check") or Map.has_key?(json, "impact")) ->
-        IO.warn("JSON structure: received a single finding instead of a list - " <>
-                "non-standard Slither output")
+        IO.warn(
+          "JSON structure: received a single finding instead of a list - " <>
+            "non-standard Slither output"
+        )
+
         [json]
 
       true ->
@@ -194,9 +207,11 @@ defmodule SlitherReport do
       end)
 
     if invalid_count > 0 do
-      IO.warn("Discarded #{invalid_count} non-map detector " <>
-              "entr#{if invalid_count == 1, do: "y", else: "ies"} - " <>
-              "Slither may have emitted malformed output")
+      IO.warn(
+        "Discarded #{invalid_count} non-map detector " <>
+          "entr#{if invalid_count == 1, do: "y", else: "ies"} - " <>
+          "Slither may have emitted malformed output"
+      )
     end
 
     Enum.reverse(valid)
@@ -214,6 +229,7 @@ defmodule SlitherReport do
   """
   def build_report([]) do
     IO.warn("No detector findings to report - the scan may have produced no results")
+
     """
     # Slither Static Analysis Report
 
@@ -437,8 +453,11 @@ defmodule SlitherReport do
     # If nothing remains after filtering, fall back to the original list
     {filtered, fell_back} =
       if own_code == [] do
-        IO.warn("[#{check}] all affected-code elements are from dependencies - " <>
-                "showing full list instead")
+        IO.warn(
+          "[#{check}] all affected-code elements are from dependencies - " <>
+            "showing full list instead"
+        )
+
         {elements, true}
       else
         {own_code, false}
@@ -448,8 +467,10 @@ defmodule SlitherReport do
     shown = Enum.take(filtered, @max_affected_entries)
 
     if total > @max_affected_entries do
-      IO.warn("[#{check}] truncating affected-code list: " <>
-              "#{total} entries, showing #{@max_affected_entries}")
+      IO.warn(
+        "[#{check}] truncating affected-code list: " <>
+          "#{total} entries, showing #{@max_affected_entries}"
+      )
     end
 
     items =
@@ -533,13 +554,17 @@ defmodule SlitherReport do
   # Guard against nil / non-map elements
   defp extract_file(el) when is_map(el) do
     sm = el["source_mapping"]
+
     cond do
       is_map(sm) and is_binary(sm["filename_short"]) ->
         sm["filename_short"]
+
       is_map(sm) and is_binary(sm["filename_relative"]) ->
         sm["filename_relative"]
+
       is_map(sm) and is_binary(sm["filename_absolute"]) ->
         Path.basename(sm["filename_absolute"])
+
       true ->
         ""
     end
@@ -549,8 +574,10 @@ defmodule SlitherReport do
 
   defp extract_lines(el) when is_map(el) do
     sm = el["source_mapping"]
+
     if is_map(sm) do
       lines = sm["lines"]
+
       if is_list(lines) and length(lines) > 0 do
         min = Enum.min(lines)
         max = Enum.max(lines)
