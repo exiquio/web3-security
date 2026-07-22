@@ -41,6 +41,9 @@ sync:
 		-e "s|DEEPSEEK_API_KEY|sk-dummy-key-does-not-matter|" \
 		-e "/extend(\"deepseek\", {/a\\            url = \"http://192.168.122.1:4000/v1/chat/completions\"," \
 		~/.config/nvim/lua/custom/plugins/codecompanion.lua'
+	@echo "  Syncing scripts..."
+	@ssh web3 mkdir -p /home/web3/scripts
+	rsync -avz --delete --chmod=u=rwx,go=rx ~/Code/Personal/web3-security/scripts/ web3@web3:~/scripts/
 	@echo "  Done."
 LITELLM_SERVICE = $(HOME)/.config/systemd/user/litellm-proxy.service
 
