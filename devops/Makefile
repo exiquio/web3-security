@@ -56,7 +56,7 @@ sync-goose:
 	@echo "  Syncing goosehints..."
 	@rsync -avz /home/exiquio/Code/Personal/goose-configs/goosehints web3@web3:~/.config/goose/goosehints
 	@echo "  Syncing and adapting config.yaml for litellm proxy..."
-	@sed 's/custom_deepseek/litellm/g; s/model: deepseek-v4-pro$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
+	@sed 's/^active_provider: custom_deepseek/active_provider: litellm/; s/^  custom_deepseek:/  litellm:/; s/model: deepseek-v4-pro[[:space:]]*$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
 	@echo "  Syncing permission.yaml..."
 	@test -f /home/exiquio/.config/goose/permission.yaml && rsync -avz /home/exiquio/.config/goose/permission.yaml web3@web3:~/.config/goose/permission.yaml
 	@echo "  Done."
