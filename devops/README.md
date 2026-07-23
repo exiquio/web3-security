@@ -39,7 +39,7 @@ Guest VM (web3)
 
 | Category | Tools |
 |---|---|
-| Shell | fish + Starship (Tokyo Night theme) + web3 audit aliases |
+| Shell | fish + Starship + web3 audit aliases |
 | Languages | Rust, Go, Node.js (via mise), Python (uv) |
 | Package managers | mise, pnpm, uv |
 | Ethereum | Foundry (forge, cast, anvil), solc-select |

@@ -50,13 +50,11 @@
         state: directory
         mode: "0755"
 
-    - name: Configure Starship with Tokyo Night theme
+    - name: Configure Starship prompt
       become_user: web3
       copy:
         dest: ~/.config/starship.toml
         content: |
-          palette = "tokyo-night"
-
           [directory]
           truncation_length = 5
           fish_style_pwd_dir_length = 1
@@ -276,7 +274,7 @@
               forge build --sizes 2>&1 | tail -20
           end
 
-          # ── Prompt (Starship / Tokyo Night) ─────────────────────────
+          # ── Prompt (Starship) ─────────────────────────────────────
           if test -f $HOME/.cargo/bin/starship
               $HOME/.cargo/bin/starship init fish | source
           end
