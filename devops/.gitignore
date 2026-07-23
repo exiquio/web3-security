@@ -1,0 +1,6 @@
+# Credential files — never commit secrets
+# Environment/credential files that may contain API keys
+secrets.*
+credentials.*
+.env*
+*.key

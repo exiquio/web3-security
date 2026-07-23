@@ -4,7 +4,7 @@ IMAGE_DIR = /home/exiquio/Tools/OSes
 IMAGE_NAME = Fedora-Cloud-Base-Generic-44-1.7.x86_64.qcow2
 IMAGE_URL = https://download.fedoraproject.org/pub/fedora/linux/releases/44/Cloud/x86_64/images/$(IMAGE_NAME)
 IMAGE_DEST = $(IMAGE_DIR)/$(IMAGE_NAME)
-.PHONY: all prepare up sync sync-goose llm-proxy-start llm-proxy-stop destroy
+.PHONY: all prepare up sync sync-goose sync-fish llm-proxy-start llm-proxy-stop destroy
 all: up sync sync-goose llm-proxy-start
 prepare:
 	@echo "Downloading Fedora Cloud Base image..."
@@ -46,6 +46,7 @@ sync:
 	rsync -avz --delete --exclude=.expert --chmod=u=rwx,go=rx ~/Code/Personal/web3-security/scripts/ web3@web3:~/scripts/
 	@echo "  Done."
 	@$(MAKE) sync-goose
+	@$(MAKE) sync-fish
 
 sync-goose:
 	@echo "Syncing Goose configuration..."
@@ -61,6 +62,16 @@ sync-goose:
 	@test -f /home/exiquio/.config/goose/permission.yaml && rsync -avz /home/exiquio/.config/goose/permission.yaml web3@web3:~/.config/goose/permission.yaml
 	@echo "  Done."
 
+sync-fish:
+	@echo "Syncing fish functions..."
+	@echo "  Adapting for VM (litellm provider)..."
+	@ssh web3 mkdir -p /home/web3/.config/fish/functions
+	@sed -e 's/set -lx GOOSE_PROVIDER custom_deepseek/set -lx GOOSE_PROVIDER litellm/' \
+	     -e 's/set -lx GOOSE_MODEL deepseek-v4-pro/set -lx GOOSE_MODEL deepseek\/deepseek-v4-pro/' \
+	     /home/exiquio/Code/Personal/fish-functions/agentic-team.fish | \
+	     ssh web3 'cat > ~/.config/fish/functions/agentic-team.fish'
+	@echo "  Done."
+
 LITELLM_SERVICE = $(HOME)/.config/systemd/user/litellm-proxy.service
 
 $(LITELLM_SERVICE):
@@ -72,6 +83,7 @@ $(LITELLM_SERVICE):
 		'After=network-online.target' \
 		'' \
 		'[Service]' \
+		'EnvironmentFile=%h/.config/environment.d/deepseek.conf' \
 		'Type=simple' \
 		'ExecStart=%h/.local/bin/litellm --config $(HOME)/Code/Personal/web3-security/devops/litellm-config.yaml --host 0.0.0.0 --port 4000' \
 		'Restart=on-failure' \
@@ -85,6 +97,13 @@ $(LITELLM_SERVICE):
 llm-proxy-start: $(LITELLM_SERVICE)
 	@echo "Ensuring DEEPSEEK_API_KEY is set..."
 	@test -n "$$DEEPSEEK_API_KEY" || { echo "✗ DEEPSEEK_API_KEY not exported! Set it and retry."; exit 1; }
+	@echo "Ensuring credential env file exists..."
+	@mkdir -p $(HOME)/.config/environment.d
+	@if [ ! -f $(HOME)/.config/environment.d/deepseek.conf ]; then \
+		echo "DEEPSEEK_API_KEY=$$DEEPSEEK_API_KEY" > $(HOME)/.config/environment.d/deepseek.conf; \
+		chmod 0600 $(HOME)/.config/environment.d/deepseek.conf; \
+		echo "✓ Created $(HOME)/.config/environment.d/deepseek.conf"; \
+	fi
 	@echo "Opening port 4000 in libvirt firewall zone..."
 	sudo firewall-cmd --zone=libvirt --add-port=4000/tcp --permanent 2>/dev/null || true
 	sudo firewall-cmd --reload 2>/dev/null || true
