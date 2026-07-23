@@ -4,8 +4,8 @@ IMAGE_DIR = /home/exiquio/Tools/OSes
 IMAGE_NAME = Fedora-Cloud-Base-Generic-44-1.7.x86_64.qcow2
 IMAGE_URL = https://download.fedoraproject.org/pub/fedora/linux/releases/44/Cloud/x86_64/images/$(IMAGE_NAME)
 IMAGE_DEST = $(IMAGE_DIR)/$(IMAGE_NAME)
-.PHONY: all prepare up sync llm-proxy-start llm-proxy-stop destroy
-all: up sync llm-proxy-start
+.PHONY: all prepare up sync sync-goose llm-proxy-start llm-proxy-stop destroy
+all: up sync sync-goose llm-proxy-start
 prepare:
 	@echo "Downloading Fedora Cloud Base image..."
 	@mkdir -p $(IMAGE_DIR)
@@ -45,6 +45,22 @@ sync:
 	@ssh web3 mkdir -p /home/web3/scripts
 	rsync -avz --delete --exclude=.expert --chmod=u=rwx,go=rx ~/Code/Personal/web3-security/scripts/ web3@web3:~/scripts/
 	@echo "  Done."
+	@$(MAKE) sync-goose
+
+sync-goose:
+	@echo "Syncing Goose configuration..."
+	@echo "  Creating config directories..."
+	@ssh web3 mkdir -p /home/web3/.config/goose /home/web3/.agents/agents
+	@echo "  Syncing agent profiles..."
+	@rsync -avz --delete /home/exiquio/Code/Personal/goose-configs/agents/ web3@web3:~/.agents/agents/
+	@echo "  Syncing goosehints..."
+	@rsync -avz /home/exiquio/Code/Personal/goose-configs/goosehints web3@web3:~/.config/goose/goosehints
+	@echo "  Syncing and adapting config.yaml for litellm proxy..."
+	@sed 's/custom_deepseek/litellm/g; s/model: deepseek-v4-pro$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
+	@echo "  Syncing permission.yaml..."
+	@test -f /home/exiquio/.config/goose/permission.yaml && rsync -avz /home/exiquio/.config/goose/permission.yaml web3@web3:~/.config/goose/permission.yaml
+	@echo "  Done."
+
 LITELLM_SERVICE = $(HOME)/.config/systemd/user/litellm-proxy.service
 
 $(LITELLM_SERVICE):

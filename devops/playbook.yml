@@ -287,20 +287,6 @@
         path: ~/.config/goose
         state: directory
 
-    - name: Create Goose provider config
-      become_user: web3
-      copy:
-        dest: ~/.config/goose/config.yaml
-        content: |
-          GOOSE_MODE: smart_approve
-          GOOSE_TELEMETRY_ENABLED: false
-          active_provider: litellm
-          providers:
-            litellm:
-              enabled: true
-              model: deepseek/deepseek-v4-pro
-              configured: true
-
     - name: Create audit working directory
       become_user: web3
       file:
