@@ -63,9 +63,10 @@ sync-goose:
 	@sed 's/^active_provider: custom_deepseek/active_provider: litellm/; s/^  custom_deepseek:/  litellm:/; s/model: deepseek-v4-pro[[:space:]]*$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
 	@echo "  Syncing permission.yaml..."
 	@test -f /home/exiquio/.config/goose/permission.yaml && rsync -avz /home/exiquio/.config/goose/permission.yaml web3@web3:~/.config/goose/permission.yaml
-	@echo "  Syncing NotebookLM OAuth tokens..."
-	@ssh web3 mkdir -p /home/web3/.config/goose/gemini_oauth
-	@test -f /home/exiquio/.config/goose/gemini_oauth/tokens.json && rsync -avz /home/exiquio/.config/goose/gemini_oauth/tokens.json web3@web3:~/.config/goose/gemini_oauth/tokens.json
+	@echo "  Syncing NotebookLM MCP auth..."
+	@ssh web3 mkdir -p /home/web3/.notebooklm-mcp-cli/profiles/default
+	@test -f /home/exiquio/.notebooklm-mcp-cli/profiles/default/cookies.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/profiles/default/ web3@web3:~/.notebooklm-mcp-cli/profiles/default/
+	@test -f /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json web3@web3:~/.notebooklm-mcp-cli/chrome-port-map.json
 	@echo "  Done."
 
 sync-fish:
