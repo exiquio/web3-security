@@ -10,7 +10,7 @@
     - name: Ensure base packages (safety net if cloud-init timed out)
       dnf:
         name:
-          - zsh
+          - fish
           - neovim
           - git
           - gcc
@@ -38,17 +38,64 @@
       args:
         creates: /usr/bin/gh
 
-    - name: Set web3 shell to zsh
+    - name: Set web3 shell to fish
       user:
         name: web3
-        shell: /bin/zsh
+        shell: /usr/bin/fish
 
-    - name: Install Oh My Zsh
+    - name: Create fish config directory
       become_user: web3
-      shell: |
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-      args:
-        creates: ~/.oh-my-zsh
+      file:
+        path: ~/.config/fish
+        state: directory
+        mode: "0755"
+
+    - name: Configure Starship with Tokyo Night theme
+      become_user: web3
+      copy:
+        dest: ~/.config/starship.toml
+        content: |
+          palette = "tokyo-night"
+
+          [directory]
+          truncation_length = 5
+          fish_style_pwd_dir_length = 1
+
+          [git_branch]
+          style = "bold #7aa2f7"
+
+          [git_status]
+          style = "bold #e0af68"
+
+          [cmd_duration]
+          min_time = 2000
+          style = "#565f89"
+
+          [status]
+          style = "bold #f7768e"
+          disabled = false
+
+          [character]
+          success_symbol = "[╰─](bold #9ece6a)"
+          error_symbol = "[╰─](bold #f7768e)"
+
+          [container]
+          disabled = true
+
+          [python]
+          symbol = "🐍 "
+
+          [rust]
+          symbol = "⚙️ "
+
+          [golang]
+          symbol = "🐹 "
+
+          [nodejs]
+          symbol = "⬢ "
+
+          [elixir]
+          symbol = "💧 "
 
     - name: Install Rust and Cargo
       become_user: web3
@@ -77,6 +124,13 @@
         PATH="$HOME/.cargo/bin:$PATH" cargo install sd
       args:
         creates: ~/.cargo/bin/sd
+
+    - name: Install Starship prompt
+      become_user: web3
+      shell: |
+        PATH="$HOME/.cargo/bin:$PATH" cargo install starship --locked
+      args:
+        creates: ~/.cargo/bin/starship
 
     - name: Install pnpm via mise
       become_user: web3
@@ -149,30 +203,83 @@
       args:
         creates: ~/.local/bin/slither
 
-    - name: Create LiteLLM env vars in .zshenv (for non-interactive shells)
+    - name: Configure fish shell
       become_user: web3
-      blockinfile:
-        path: ~/.zshenv
-        create: yes
-        block: |
-          export LITELLM_HOST="http://192.168.122.1:4000"
-          export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
-          export GOOSE_MODE=smart_approve
-          export GOOSE_CONTEXT_LIMIT=128000
-          export PATH="$HOME/scripts:$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
-          eval "$(mise activate zsh)"
+      copy:
+        dest: ~/.config/fish/config.fish
+        content: |
+          # ── Environment ──────────────────────────────────────────────
+          set -gx LITELLM_HOST "http://192.168.122.1:4000"
+          set -gx LITELLM_API_KEY "sk-dummy-key-does-not-matter"
+          set -gx GOOSE_MODE smart_approve
+          set -gx GOOSE_CONTEXT_LIMIT 128000
 
-    - name: Append same block to .zshrc for interactive shells
-      become_user: web3
-      blockinfile:
-        path: ~/.zshrc
-        block: |
-          export LITELLM_HOST="http://192.168.122.1:4000"
-          export LITELLM_API_KEY="sk-dummy-key-does-not-matter"
-          export GOOSE_MODE=smart_approve
-          export GOOSE_CONTEXT_LIMIT=128000
-          export PATH="$HOME/scripts:$HOME/.foundry/bin:$HOME/.local/bin:$HOME/.cargo/bin:$HOME/go/bin:$PATH"
-          eval "$(mise activate zsh)"
+          # ── PATH ────────────────────────────────────────────────────
+          fish_add_path --prepend $HOME/scripts
+          fish_add_path --prepend $HOME/.foundry/bin
+          fish_add_path --prepend $HOME/.local/bin
+          fish_add_path --prepend $HOME/.cargo/bin
+          fish_add_path --prepend $HOME/go/bin
+
+          # ── mise ────────────────────────────────────────────────────
+          if test -f $HOME/.local/bin/mise
+              $HOME/.local/bin/mise activate fish | source
+          end
+
+          # ── Sane defaults ───────────────────────────────────────────
+          # History
+          set -g fish_history_dir $HOME/.local/share/fish/history
+          set -g fish_history_max 100000
+
+          # Disable greeting
+          set -g fish_greeting
+
+          # ── Aliases for web3 audit work ─────────────────────────────
+          # Foundry
+          alias f="forge"
+          alias c="cast"
+          alias a="anvil"
+          alias fb="forge build"
+          alias ft="forge test"
+          alias fft="forge test --fork-url $FORK_URL"
+          alias fc="forge coverage"
+          alias finspect="forge inspect"
+          alias fsize="forge build --sizes"
+
+          # Solidity
+          alias solc-select="solc-select"
+          alias slither="slither"
+
+          # Git shorthand
+          alias g="git"
+          alias gs="git status"
+          alias gd="git diff"
+          alias gl="git log --oneline --graph --decorate -20"
+          alias gp="git push"
+          alias gco="git checkout"
+
+          # Navigation
+          alias ..="cd .."
+          alias ...="cd ../.."
+          alias ls="ls -la --color=auto"
+          alias ll="ls -la --color=auto"
+          alias tree="tree -C"
+
+          # ── Functions ───────────────────────────────────────────────
+          function audit-init
+              mkdir -p findings/{critical,high,medium,low,info,gas}
+              echo "# Audit Report" > report.md
+              echo "Audit dir ready."
+          end
+
+          function forge-summary
+              forge build --sizes 2>&1 | tail -20
+          end
+
+          # ── Prompt (Starship / Tokyo Night) ─────────────────────────
+          if test -f $HOME/.cargo/bin/starship
+              $HOME/.cargo/bin/starship init fish | source
+          end
 
     - name: Create Goose config directory
       become_user: web3

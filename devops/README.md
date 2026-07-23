@@ -22,11 +22,11 @@ Host (your machine)
 
 Guest VM (web3)
   ├─ virt-install (KVM + cloud-init)
-  │     ├─ packages: zsh, git, gcc, golang, openssl-devel, …
+  │     ├─ packages: fish, git, gcc, golang, openssl-devel, …
   │     ├─ user: web3 (wheel, passwordless sudo, SSH key)
   │     └─ dnf.conf: resilient mirror selection
   ├─ ansible-playbook
-  │     ├─ zsh, Oh My Zsh
+  │     ├─ fish shell with sane defaults
   │     ├─ Rust, mise, Node.js, pnpm
   │     ├─ uv, scc, Goose AI
   │     ├─ typst-cli, pandoc
@@ -39,7 +39,7 @@ Guest VM (web3)
 
 | Category | Tools |
 |---|---|
-| Shell | zsh + Oh My Zsh |
+| Shell | fish + Starship (Tokyo Night theme) + web3 audit aliases |
 | Languages | Rust, Go, Node.js (via mise), Python (uv) |
 | Package managers | mise, pnpm, uv |
 | Ethereum | Foundry (forge, cast, anvil), solc-select |

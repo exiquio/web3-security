@@ -1,6 +1,6 @@
 #cloud-config
 packages:
-  - zsh
+  - fish
   - neovim
   - git
   - gcc
@@ -16,7 +16,7 @@ users:
   - name: web3
     groups: wheel
     sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-    shell: /bin/bash
+    shell: /usr/bin/fish
     ssh_authorized_keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMHdxxIUQf/tdBp1O+pS1TsRctuAjvK358MP6IN0eygy exiquio@gmail.com
 write_files:
