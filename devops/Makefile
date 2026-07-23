@@ -49,6 +49,9 @@ sync:
 	@$(MAKE) sync-fish
 
 sync-goose:
+	@# Ensure host symlinks are in place
+	@test -f $(HOME)/Code/Personal/goose-configs/Makefile && \
+		$(MAKE) -C $(HOME)/Code/Personal/goose-configs install || true
 	@echo "Syncing Goose configuration..."
 	@echo "  Creating config directories..."
 	@ssh web3 mkdir -p /home/web3/.config/goose /home/web3/.agents/agents
