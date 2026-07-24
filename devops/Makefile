@@ -61,8 +61,8 @@ sync-goose:
 	@rsync -avz --delete /home/exiquio/Code/Personal/goose-configs/recipes/ web3@web3:~/.config/goose/recipes/
 	@echo "  Syncing goosehints..."
 	@rsync -avz /home/exiquio/Code/Personal/goose-configs/goosehints web3@web3:~/.config/goose/goosehints
-	@echo "  Syncing guardrails.md..."
-	@rsync -avz /home/exiquio/Code/Personal/goose-configs/guardrails.md web3@web3:~/.config/goose/guardrails.md
+	@echo "  Syncing and adapting guardrails.md for litellm proxy..."
+	@sed 's/| \(technical_researcher\) | qwen3\.6-flash | qwen3\.7-plus | alibaba |/| \1 | qwen\/qwen3.6-flash | qwen\/qwen3.7-plus | litellm |/; s/| \(security_qa\) | deepseek-v4-flash | deepseek-v4-pro | custom_deepseek |/| \1 | deepseek\/deepseek-v4-flash | deepseek\/deepseek-v4-pro | litellm |/; s/| \(software_engineer\) | deepseek-v4-flash | deepseek-v4-pro | custom_deepseek |/| \1 | deepseek\/deepseek-v4-flash | deepseek\/deepseek-v4-pro | litellm |/; s/| \(devsecops\) | deepseek-v4-flash | deepseek-v4-pro | custom_deepseek |/| \1 | deepseek\/deepseek-v4-flash | deepseek\/deepseek-v4-pro | litellm |/' /home/exiquio/Code/Personal/goose-configs/guardrails.md | ssh web3 'cat > ~/.config/goose/guardrails.md'
 	@echo "  Syncing and adapting config.yaml for litellm proxy..."
 	@sed 's/^active_provider: custom_deepseek/active_provider: litellm/; s/^  custom_deepseek:/  litellm:/; s/model: deepseek-v4-pro[[:space:]]*$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
 	@echo "  Syncing permission.yaml..."
@@ -72,7 +72,7 @@ sync-goose:
 	@test -f /home/exiquio/.notebooklm-mcp-cli/profiles/default/cookies.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/profiles/default/ web3@web3:~/.notebooklm-mcp-cli/profiles/default/
 	@test -f /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json web3@web3:~/.notebooklm-mcp-cli/chrome-port-map.json
 	@echo "  Validating VM config..."
-	@ssh web3 'grep -q "active_provider: litellm" ~/.config/goose/config.yaml && grep -q "model: deepseek/deepseek-v4-pro" ~/.config/goose/config.yaml' || { echo "  ✗ FAILED: config.yaml transform did not apply correctly!"; exit 1; }
+	@ssh web3 'grep -q "active_provider: litellm" ~/.config/goose/config.yaml && grep -q "model: deepseek/deepseek-v4-pro" ~/.config/goose/config.yaml && grep -q "litellm" ~/.config/goose/guardrails.md && grep -q "deepseek/deepseek-v4-flash" ~/.config/goose/guardrails.md && grep -q "qwen/qwen3.6-flash" ~/.config/goose/guardrails.md' || { echo "  ✗ FAILED: VM transforms did not apply correctly!"; exit 1; }
 	@echo "  ✓ VM config validated"
 	@echo "  Done."
 
