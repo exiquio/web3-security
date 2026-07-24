@@ -57,6 +57,8 @@ sync-goose:
 	@ssh web3 mkdir -p /home/web3/.config/goose /home/web3/.agents/agents
 	@echo "  Syncing agent profiles..."
 	@rsync -avz --delete /home/exiquio/Code/Personal/goose-configs/agents/ web3@web3:~/.agents/agents/
+	@echo "  Syncing recipes..."
+	@rsync -avz --delete /home/exiquio/Code/Personal/goose-configs/recipes/ web3@web3:~/.config/goose/recipes/
 	@echo "  Syncing goosehints..."
 	@rsync -avz /home/exiquio/Code/Personal/goose-configs/goosehints web3@web3:~/.config/goose/goosehints
 	@echo "  Syncing guardrails.md..."
