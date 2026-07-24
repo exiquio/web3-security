@@ -59,14 +59,19 @@ sync-goose:
 	@rsync -avz --delete /home/exiquio/Code/Personal/goose-configs/agents/ web3@web3:~/.agents/agents/
 	@echo "  Syncing goosehints..."
 	@rsync -avz /home/exiquio/Code/Personal/goose-configs/goosehints web3@web3:~/.config/goose/goosehints
+	@echo "  Syncing guardrails.md..."
+	@rsync -avz /home/exiquio/Code/Personal/goose-configs/guardrails.md web3@web3:~/.config/goose/guardrails.md
 	@echo "  Syncing and adapting config.yaml for litellm proxy..."
 	@sed 's/^active_provider: custom_deepseek/active_provider: litellm/; s/^  custom_deepseek:/  litellm:/; s/model: deepseek-v4-pro[[:space:]]*$$/model: deepseek\/deepseek-v4-pro/' /home/exiquio/Code/Personal/goose-configs/config.yaml | ssh web3 'cat > ~/.config/goose/config.yaml'
 	@echo "  Syncing permission.yaml..."
-	@test -f /home/exiquio/.config/goose/permission.yaml && rsync -avz /home/exiquio/.config/goose/permission.yaml web3@web3:~/.config/goose/permission.yaml
+	@rsync -avz /home/exiquio/Code/Personal/goose-configs/permission.yaml web3@web3:~/.config/goose/permission.yaml
 	@echo "  Syncing NotebookLM MCP auth..."
 	@ssh web3 mkdir -p /home/web3/.notebooklm-mcp-cli/profiles/default
 	@test -f /home/exiquio/.notebooklm-mcp-cli/profiles/default/cookies.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/profiles/default/ web3@web3:~/.notebooklm-mcp-cli/profiles/default/
 	@test -f /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json && rsync -avz /home/exiquio/.notebooklm-mcp-cli/chrome-port-map.json web3@web3:~/.notebooklm-mcp-cli/chrome-port-map.json
+	@echo "  Validating VM config..."
+	@ssh web3 'grep -q "active_provider: litellm" ~/.config/goose/config.yaml && grep -q "model: deepseek/deepseek-v4-pro" ~/.config/goose/config.yaml' || { echo "  ✗ FAILED: config.yaml transform did not apply correctly!"; exit 1; }
+	@echo "  ✓ VM config validated"
 	@echo "  Done."
 
 sync-fish:
@@ -75,6 +80,7 @@ sync-fish:
 	@ssh web3 mkdir -p /home/web3/.config/fish/functions
 	@sed -e 's/set -lx GOOSE_PROVIDER custom_deepseek/set -lx GOOSE_PROVIDER litellm/' \
 	     -e 's/set -lx GOOSE_MODEL deepseek-v4-pro/set -lx GOOSE_MODEL deepseek\/deepseek-v4-pro/' \
+	     -e 's|cat ~/.config/goose/guardrails.md ~/Code/Personal/goose-configs/STATE.md > /tmp/goose-moim-context.txt|cat ~/.config/goose/guardrails.md > /tmp/goose-moim-context.txt|' \
 	     /home/exiquio/Code/Personal/fish-functions/agentic-team.fish | \
 	     ssh web3 'cat > ~/.config/fish/functions/agentic-team.fish'
 	@echo "  Done."
