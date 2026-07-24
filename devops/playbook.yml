@@ -95,6 +95,13 @@
           [elixir]
           symbol = "💧 "
 
+    - name: Install glow
+      become_user: web3
+      shell: |
+        curl -fsSL https://raw.githubusercontent.com/charmbracelet/glow/main/install.sh | bash
+      args:
+        creates: ~/.local/bin/glow
+
     - name: Install Rust and Cargo
       become_user: web3
       shell: |
