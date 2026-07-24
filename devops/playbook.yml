@@ -243,6 +243,7 @@
           # Navigation
           alias ls="ls --color=auto"
           alias tree="tree -C"
+          alias glow='glow -t'
 
           # ── Functions ───────────────────────────────────────────────
           function audit-init
