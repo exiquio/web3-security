@@ -239,35 +239,9 @@
           # Disable greeting
           set -g fish_greeting
 
-          # ── Aliases for web3 audit work ─────────────────────────────
-          # Foundry
-          alias f="forge"
-          alias c="cast"
-          alias a="anvil"
-          alias fb="forge build"
-          alias ft="forge test"
-          alias fft="forge test --fork-url $FORK_URL"
-          alias fc="forge coverage"
-          alias finspect="forge inspect"
-          alias fsize="forge build --sizes"
-
-          # Solidity
-          alias solc-select="solc-select"
-          alias slither="slither"
-
-          # Git shorthand
-          alias g="git"
-          alias gs="git status"
-          alias gd="git diff"
-          alias gl="git log --oneline --graph --decorate -20"
-          alias gp="git push"
-          alias gco="git checkout"
-
+          # ── Aliases
           # Navigation
-          alias ..="cd .."
-          alias ...="cd ../.."
-          alias ls="ls -la --color=auto"
-          alias ll="ls -la --color=auto"
+          alias ls="ls --color=auto"
           alias tree="tree -C"
 
           # ── Functions ───────────────────────────────────────────────
